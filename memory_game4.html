@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memoria: Restauración Ecológica</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f7f0;
+            color: #2c3e50;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background-color: #2d6a4f;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background-color: #74c69d;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #1a3a28;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .timer, .score {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            height: 140px;
+            position: relative;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card.matched {
+            transform: rotateY(180deg);
+            box-shadow: 0 0 0 2px #52b788;
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .card-front {
+            background-color: #95d5b2;
+            transform: rotateY(180deg);
+        }
+        
+        .card-back {
+            background-color: #1b4332;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .card-back::after {
+            content: "RE";
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background-color: #2d6a4f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background-color: #1b4332;
+        }
+        
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .level-btn {
+            padding: 8px 16px;
+            background-color: #74c69d;
+            color: #1a3a28;
+            border: 1px solid #2d6a4f;
+        }
+        
+        .level-btn.active {
+            background-color: #2d6a4f;
+            color: white;
+        }
+        
+        .instructions {
+            background-color: #d8f3dc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #2d6a4f;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .signature {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2d6a4f;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .modal h2 {
+            color: #2d6a4f;
+            margin-bottom: 15px;
+        }
+        
+        .modal p {
+            margin-bottom: 20px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .card {
+                height: 120px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .info-box {
+                margin-bottom: 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-board {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .card {
+                height: 100px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Memoria: Restauración Ecológica</h1>
+        <p>Encuentra los pares relacionando conceptos y aplicaciones</p>
+    </header>
+    
+    <div class="game-info">
+        <div class="info-box">
+            <div id="level-display">Nivel: <span id="current-level">1</span></div>
+            <div id="theme-display">Tema: <span id="current-theme">Restauración Ecológica</span></div>
+        </div>
+        <div class="info-box">
+            <div>Tiempo:</div>
+            <div class="timer" id="timer">00:00.0</div>
+        </div>
+        <div class="info-box">
+            <div>Puntaje:</div>
+            <div class="score" id="score">0</div>
+        </div>
+    </div>
+    
+    <div class="level-buttons" id="level-buttons">
+        <button class="level-btn active" data-level="1" data-theme="restauracion">Nivel 1</button>
+        <button class="level-btn" data-level="2" data-theme="restauracion">Nivel 2</button>
+        <button class="level-btn" data-level="3" data-theme="estrategias">Nivel 3</button>
+        <button class="level-btn" data-level="4" data-theme="estrategias">Nivel 4</button>
+        <button class="level-btn" data-level="5" data-theme="monitoreo">Nivel 5</button>
+        <button class="level-btn" data-level="6" data-theme="monitoreo">Nivel 6</button>
+    </div>
+    
+    <div class="game-board" id="game-board"></div>
+    
+    <div class="controls">
+        <button id="restart-btn">Reiniciar Juego</button>
+    </div>
+    
+    <div class="modal" id="win-modal">
+        <div class="modal-content">
+            <h2>¡Felicidades!</h2>
+            <p>Has completado el nivel <span id="completed-level">1</span>.</p>
+            <p>Tiempo: <span id="final-time">00:00.0</span></p>
+            <p>Puntaje: <span id="final-score">0</span></p>
+            <button id="next-level-btn">Siguiente Nivel</button>
+            <button id="close-modal-btn">Cerrar</button>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <h2>Instrucciones del Juego</h2>
+        <ol>
+            <li>El objetivo es encontrar todas las parejas de cartas que contienen conceptos relacionados.</li>
+            <li>Haz clic en dos cartas para voltearlas.</li>
+            <li>Si las cartas coinciden conceptualmente, se quedarán volteadas.</li>
+            <li>Si no coinciden, se volverán a ocultar.</li>
+            <li>Intenta encontrar todas las parejas en el menor tiempo posible.</li>
+            <li>Tu puntuación se calcula en base a los aciertos y el tiempo empleado.</li>
+        </ol>
+        <p>Este juego está diseñado para reforzar tus conocimientos sobre restauración ecológica, sus estrategias y métodos de monitoreo a través de tres temáticas:</p>
+        <ul>
+            <li>Conceptos de restauración ecológica (Niveles 1-2)</li>
+            <li>Estrategias de restauración (Niveles 3-4)</li>
+            <li>Monitoreo de la restauración ecológica (Niveles 5-6)</li>
+        </ul>
+        <div class="signature">RE - Restauración Ecológica</div>
+    </div>
+
+    <script>
+        // Datos del juego
+        const gameData = {
+            restauracion: {
+                nivel1: [
+                    { id: 1, concept: "Restauración Ecológica", match: "Proceso para recuperar un ecosistema degradado" },
+                    { id: 2, concept: "Degradación", match: "Deterioro de la estructura y función de un ecosistema" },
+                    { id: 3, concept: "Resiliencia", match: "Capacidad de un ecosistema para recuperarse tras perturbaciones" },
+                    { id: 4, concept: "Sucesión Ecológica", match: "Proceso ordenado de cambios en la composición de especies" }
+                ],
+                nivel2: [
+                    { id: 1, concept: "Ecosistema de Referencia", match: "Modelo para planificar la restauración" },
+                    { id: 2, concept: "Rehabilitación", match: "Reparación parcial de funciones ecosistémicas" },
+                    { id: 3, concept: "Reclamación", match: "Recuperación de la productividad en tierras degradadas" },
+                    { id: 4, concept: "Servicios Ecosistémicos", match: "Beneficios que los humanos obtienen de los ecosistemas" },
+                    { id: 5, concept: "Restauración Pasiva", match: "Regeneración natural sin intervención humana directa" },
+                    { id: 6, concept: "Perturbación", match: "Evento que altera la estructura del ecosistema" }
+                ]
+            },
+            estrategias: {
+                nivel1: [
+                    { id: 1, concept: "Reforestación", match: "Plantación de árboles en áreas deforestadas" },
+                    { id: 2, concept: "Control de Erosión", match: "Uso de barreras físicas para retener suelo" },
+                    { id: 3, concept: "Eliminación de Especies Invasoras", match: "Retiro de organismos no nativos perjudiciales" },
+                    { id: 4, concept: "Revegetación", match: "Introducción de plantas nativas en áreas degradadas" }
+                ],
+                nivel2: [
+                    { id: 1, concept: "Nucleación", match: "Creación de pequeños núcleos de diversidad biológica" },
+                    { id: 2, concept: "Biorremediación", match: "Uso de organismos para degradar contaminantes" },
+                    { id: 3, concept: "Conectividad de Hábitat", match: "Creación de corredores ecológicos entre fragmentos" },
+                    { id: 4, concept: "Restauración Hidrológica", match: "Recuperación de cauces naturales y ciclos del agua" },
+                    { id: 5, concept: "Propagación de Especies Nativas", match: "Cultivo y reproducción de flora local" },
+                    { id: 6, concept: "Translocación", match: "Reintroducción de especies animales en áreas restauradas" }
+                ]
+            },
+            monitoreo: {
+                nivel1: [
+                    { id: 1, concept: "Indicadores Biológicos", match: "Especies cuya presencia indica calidad ambiental" },
+                    { id: 2, concept: "Parcelas Permanentes", match: "Áreas delimitadas para seguimiento a largo plazo" },
+                    { id: 3, concept: "Índice de Diversidad", match: "Medida matemática de la riqueza de especies" },
+                    { id: 4, concept: "Fotointerpretación", match: "Análisis de imágenes aéreas o satelitales" }
+                ],
+                nivel2: [
+                    { id: 1, concept: "Biomasa", match: "Cantidad total de materia orgánica presente" },
+                    { id: 2, concept: "Análisis de Suelos", match: "Evaluación de propiedades físicas y químicas del sustrato" },
+                    { id: 3, concept: "Monitoreo Fenológico", match: "Seguimiento de ciclos de floración y fructificación" },
+                    { id: 4, concept: "Redes Tróficas", match: "Estudio de relaciones alimentarias entre especies" },
+                    { id: 5, concept: "Calidad del Agua", match: "Medición de parámetros físico-químicos hídricos" },
+                    { id: 6, concept: "Teledetección", match: "Uso de sensores remotos para evaluar vegetación" }
+                ]
+            }
+        };
+
+        // Variables del juego
+        let currentLevel = 1;
+        let currentTheme = "restauracion";
+        let score = 0;
+        let startTime;
+        let timerInterval;
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+        let matches = 0;
+        let totalPairs = 0;
+        let levelData;
+
+        // Elementos DOM
+        const gameBoard = document.getElementById('game-board');
+        const timerElement = document.getElementById('timer');
+        const scoreElement = document.getElementById('score');
+        const currentLevelElement = document.getElementById('current-level');
+        const themeDisplayElement = document.getElementById('current-theme');
+        const restartButton = document.getElementById('restart-btn');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const winModal = document.getElementById('win-modal');
+        const nextLevelButton = document.getElementById('next-level-btn');
+        const closeModalButton = document.getElementById('close-modal-btn');
+        const completedLevelElement = document.getElementById('completed-level');
+        const finalTimeElement = document.getElementById('final-time');
+        const finalScoreElement = document.getElementById('final-score');
+
+        // Inicializar el juego
+        function init() {
+            loadLevel(currentLevel, currentTheme);
+            
+            // Event listeners
+            restartButton.addEventListener('click', restartGame);
+            
+            levelButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    levelButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    currentLevel = parseInt(button.dataset.level);
+                    currentTheme = button.dataset.theme;
+                    loadLevel(currentLevel, currentTheme);
+                });
+            });
+            
+            nextLevelButton.addEventListener('click', () => {
+                winModal.style.display = 'none';
+                goToNextLevel();
+            });
+            
+            closeModalButton.addEventListener('click', () => {
+                winModal.style.display = 'none';
+            });
+        }
+
+        // Cargar un nivel específico
+        function loadLevel(level, theme) {
+            stopTimer();
+            resetBoard();
+            score = 0;
+            matches = 0;
+            updateScore();
+            
+            let themeData;
+            let levelKey;
+            let themeText;
+            
+            switch(theme) {
+                case "restauracion":
+                    themeData = gameData.restauracion;
+                    themeText = "Restauración Ecológica";
+                    break;
+                case "estrategias":
+                    themeData = gameData.estrategias;
+                    themeText = "Estrategias de Restauración";
+                    break;
+                case "monitoreo":
+                    themeData = gameData.monitoreo;
+                    themeText = "Monitoreo de Restauración";
+                    break;
+            }
+            
+            levelKey = level % 2 === 0 ? "nivel2" : "nivel1";
+            levelData = themeData[levelKey];
+            totalPairs = levelData.length;
+            
+            currentLevelElement.textContent = level;
+            themeDisplayElement.textContent = themeText;
+            
+            createCards(levelData);
+            startTimer();
+        }
+
+        // Crear las tarjetas para el juego
+        function createCards(data) {
+            gameBoard.innerHTML = '';
+            
+            // Crear array con todas las cartas (conceptos y coincidencias)
+            let cards = [];
+            data.forEach(item => {
+                cards.push({
+                    id: item.id,
+                    content: item.concept,
+                    type: 'concept'
+                });
+                cards.push({
+                    id: item.id,
+                    content: item.match,
+                    type: 'match'
+                });
+            });
+            
+            // Mezclar las cartas
+            shuffleArray(cards);
+            
+            // Crear elementos DOM para las cartas
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.type = card.type;
+                
+                const frontFace = document.createElement('div');
+                frontFace.className = 'card-face card-front';
+                frontFace.textContent = card.content;
+                
+                const backFace = document.createElement('div');
+                backFace.className = 'card-face card-back';
+                
+                cardElement.appendChild(frontFace);
+                cardElement.appendChild(backFace);
+                
+                cardElement.addEventListener('click', flipCard);
+                gameBoard.appendChild(cardElement);
+            });
+            
+            // Ajustar el diseño de la cuadrícula según el número de cartas
+            if (data.length > 4) {
+                gameBoard.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            } else {
+                gameBoard.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            }
+        }
+
+        // Función para voltear una carta
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+            
+            this.classList.add('flipped');
+            
+            if (!hasFlippedCard) {
+                // Primera carta
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+            
+            // Segunda carta
+            secondCard = this;
+            checkForMatch();
+        }
+
+        // Comprobar si hay coincidencia entre las cartas
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.id === secondCard.dataset.id;
+            
+            if (isMatch) {
+                disableCards();
+                matches++;
+                updateScore(true);
+                
+                // Verificar si se han encontrado todos los pares
+                if (matches === totalPairs) {
+                    setTimeout(() => {
+                        stopTimer();
+                        showWinModal();
+                    }, 500);
+                }
+            } else {
+                unflipCards();
+                updateScore(false);
+            }
+        }
+
+        // Deshabilitar cartas coincidentes
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            
+            resetBoard();
+        }
+
+        // Voltear de nuevo las cartas que no coinciden
+        function unflipCards() {
+            lockBoard = true;
+            
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                
+                resetBoard();
+            }, 1000);
+        }
+
+        // Restablecer el tablero
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        // Iniciar el temporizador
+        function startTimer() {
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 100);
+        }
+
+        // Detener el temporizador
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // Actualizar el temporizador
+        function updateTimer() {
+            const currentTime = new Date();
+            const elapsedTime = new Date(currentTime - startTime);
+            const minutes = elapsedTime.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = elapsedTime.getUTCSeconds().toString().padStart(2, '0');
+            const tenths = Math.floor(elapsedTime.getUTCMilliseconds() / 100);
+            
+            timerElement.textContent = `${minutes}:${seconds}.${tenths}`;
+        }
+
+        // Actualizar la puntuación
+        function updateScore(isMatch = null) {
+            if (isMatch === true) {
+                score += 100;
+            } else if (isMatch === false) {
+                score = Math.max(0, score - 20);
+            }
+            
+            scoreElement.textContent = score;
+        }
+
+        // Calcular la puntuación final
+        function calculateFinalScore() {
+            const currentTime = new Date();
+            const elapsedTime = (currentTime - startTime) / 1000; // en segundos
+            const timeBonus = Math.max(0, 1000 - Math.floor(elapsedTime * 5));
+            
+            return score + timeBonus;
+        }
+
+        // Mostrar modal de victoria
+        function showWinModal() {
+            const finalScore = calculateFinalScore();
+            
+            completedLevelElement.textContent = currentLevel;
+            finalTimeElement.textContent = timerElement.textContent;
+            finalScoreElement.textContent = finalScore;
+            
+            winModal.style.display = 'flex';
+        }
+
+        // Ir al siguiente nivel
+        function goToNextLevel() {
+            currentLevel++;
+            
+            // Cambiar de tema si corresponde
+            if (currentLevel > 2 && currentLevel <= 4) {
+                currentTheme = "estrategias";
+            } else if (currentLevel > 4) {
+                currentTheme = "monitoreo";
+            }
+            
+            // Si se completan todos los niveles, volver al primero
+            if (currentLevel > 6) {
+                currentLevel = 1;
+                currentTheme = "restauracion";
+            }
+            
+            // Actualizar botón activo
+            levelButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.dataset.level) === currentLevel) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            loadLevel(currentLevel, currentTheme);
+        }
+
+        // Reiniciar el juego
+        function restartGame() {
+            loadLevel(currentLevel, currentTheme);
+        }
+
+        // Función para mezclar un array
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Iniciar el juego cuando se carga la página
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
