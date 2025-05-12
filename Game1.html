@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronología de la Restauración Ecológica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .draggable {
+            cursor: grab;
+            user-select: none;
+        }
+        .draggable:active {
+            cursor: grabbing;
+        }
+        #timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 2rem;
+            margin-top: 2rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            background-color: #f3f4f6; /* bg-gray-100 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+        }
+        .timeline-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            background-color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); /* shadow-sm */
+            min-height: 8rem; /* Asegura un mínimo de altura */
+            position: relative; /* Para posicionar el mensaje */
+        }
+        .timeline-section h3 {
+            font-size: 1.25rem; /* text-lg */
+            font-weight: 500; /* font-medium */
+            color: #1f2937; /* text-gray-800 */
+            margin-bottom: 0.75rem; /* mb-3 */
+        }
+        .event-card {
+            background-color: #e5e7eb; /* bg-gray-200 */
+            padding: 1rem;
+            margin-bottom: 0.5rem; /* mb-2 */
+            border-radius: 0.5rem; /* rounded-md */
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-xs */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            display: flex; /* Añadido para la alineación */
+            align-items: center; /* Centrar verticalmente */
+            min-height: 2.5rem; /* Altura mínima para cada карточка */
+        }
+        .event-card:active {
+            cursor: grabbing;
+        }
+        #message-container {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            text-align: center;
+            font-weight: 500; /* font-medium */
+            font-size: 1.25rem; /* text-lg */
+        }
+        .feedback-correct {
+            background-color: #f0fdf4; /* bg-green-100 */
+            color: #15803d; /* text-green-700 */
+            border: 1px solid #16a34a; /* border-green-500 */
+        }
+        .feedback-incorrect {
+            background-color: #fef2f2; /* bg-red-100 */
+            color: #b91c1c; /* text-red-700 */
+            border: 1px solid #ef4444; /* border-red-500 */
+        }
+        .hidden {
+            display: none;
+        }
+        .reset-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            background-color: #ef4444;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 0.5rem auto; /* Centrar horizontalmente */
+            display: block; /* Convertir a bloque para centrar con margin: auto */
+            text-align: center; /* Asegurar que el texto esté centrado */
+            width: fit-content; /* Ajustar el ancho al contenido */
+        }
+        .reset-button:hover {
+            background-color: #dc2626;
+        }
+        .timeline-section .placeholder {
+            height: 2.5rem;  /* Debe ser igual a la altura de event-card */
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            border: 2px dashed #d1d5db; /* Estilo de placeholder */
+            background-color: #f9fafb;
+        }
+        .timeline-section .placeholder.drop-hover {
+             background-color: #f0f0f0; /* Ligeramente más oscuro al arrastrar */
+            border-color: #9ca3af;  /* Cambiar color del borde */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+    <h1 class="text-2xl font-semibold text-gray-800 mt-4">Organiza la Cronología de la Restauración Ecológica</h1>
+
+    <div id="timeline-container" class="w-full max-w-4xl">
+        </div>
+
+    <div id="message-container" class="mt-8 w-full max-w-4xl hidden">
+        </div>
+
+    <button id="reset-button" class="reset-button hidden">Reiniciar</button>
+
+    <script>
+        const timelineContainer = document.getElementById('timeline-container');
+        const messageContainer = document.getElementById('message-container');
+        const resetButton = document.getElementById('reset-button');
+
+
+        const eventsData = [
+            { year: 2007, text: "Se adopta la Declaración de las Naciones Unidas sobre los Derechos de los Pueblos Indígenas (UNDRIP)." },
+            { year: 2010, text: "Se publica la Política de la FAO sobre los Pueblos Indígenas y Tribales." },
+            { year: 2013, text: "Se publica la versión 1.0 de las Directrices de la IUCN Species Survival Commission para reintroducciones y otras translocaciones de conservación." },
+            { year: 2014, text: "Se publica la Guía de la FAO 'Respeto del consentimiento libre, previo e informado: guía práctica para gobiernos, empresas, ONG, pueblos indígenas y comunidades locales en relación con la adquisición de tierras' y la Guía de la IUCN y WRI 'Una guía de la Metodología de Evaluación de Oportunidades de Restauración (ROAM): Evaluación de oportunidades de restauración del paisaje forestal a nivel nacional o subnacional'." },
+            { year: 2015, text: "Se publica la publicación de IUFRO 'Restauración del paisaje forestal como componente clave de la mitigación y adaptación al cambio climático'." },
+            { year: 2017, text: "Se publica el 'Plan de gestión de áreas especiales de conservación de turberas elevadas a nivel nacional 2017-2022' del Departamento de Cultura, Patrimonio y Gaeltacht de Irlanda y la 'Guía de gestión de hábitats protegidos para Letonia' de la Agencia de Conservación de la Naturaleza." },
+            { year: 2018, text: "La FAO y la Unidad de Pueblos Indígenas de la FAO articulan la restauración biocéntrica de los pueblos indígenas. Se publica 'Un marco para monitorear el progreso de la Estrategia Nacional de Restauración del Paisaje Forestal de Malawi' del Gobierno de Malawi." },
+            { year: 2019, text: "Se publica la segunda edición de los 'Principios y estándares internacionales para la práctica de la restauración ecológica' por Gann et al. Se publica la Guía de la FAO y WRI 'El camino hacia la restauración: Una guía para identificar prioridades e indicadores para monitorear la restauración de bosques y paisajes'. Se publica el 'Manual de regeneración natural gestionada por agricultores (FMNR)' por Rinaudo, Muller y Morris. Se publica el 'Glosario de Pueblos Indígenas' por el FIDA." },
+            { year: 2020, text: "Se publica la primera edición del 'Estándar Global para las Soluciones Basadas en la Naturaleza' por la IUCN. Se publica la versión 4.0 de los 'Estándares Abiertos para la Práctica de la Conservación' por Conservation Measures Partnership. Se publica 'Enfoques de agricultura sostenible. Explorando los caminos hacia el futuro de la agricultura' por Oberč y Arroyo Schnell." },
+            { year: 2021, text: "Se inicia la Década de las Naciones Unidas sobre la Restauración de los Ecosistemas 2021–2030. Se publica 'The White/Wiphala Paper on Indigenous Peoples’ food systems' por la FAO. Se publica 'Indigenous Peoples’ food systems: Insights on sustainability and resilience in the front line of climate change' por la FAO y la Alliance of Bioversity International y CIAT. Se publica 'Using ecosystem risk assessment science in ecosystem restoration: a guide to applying the Red List of Ecosystems to ecosystem restoration' por Valderrábano et al. Se publica 'Getting it right, a guide to improve inclusion in multistakeholder forums' por Evans et al. Se publica el 'Plan Regional Adoptado y Estándares de Umbral' por la Agencia Regional de Planificación de Tahoe." },
+            { year: 2022, text: "Se publica la primera revisión de las 'Directrices voluntarias sobre la gobernanza responsable de la tenencia de la tierra, la pesca y los bosques en el contexto de la seguridad alimentaria nacional' por la FAO. Se publica 'Indicadores globales para el monitoreo de la restauración de ecosistemas' por la FAO y el PNUMA. Se publica el 'Glosario IPBES' por la secretaría de IPBES. Se publican las entradas del Tesauro Multilingüe AGROVOC de la FAO para 'Territorios de los Pueblos Indígenas', 'conocimiento local' y 'partes interesadas'. Se publica 'Removing small dams in Maine: updated guide for project managers' por Maine Rivers. Se publica 'Indigenous Peoples biocentric restoration' por la FAO." },
+            { year: 2023, text: "Citas del Tesauro Multilingüe AGROVOC de la FAO para 'Territorios de los Pueblos Indígenas', 'conocimiento local' y 'partes interesadas' respectivamente, y del Glosario IPBES." },
+            { year: 2023, text: "Cita de la publicación 'Indigenous Peoples biocentric restoration' de la FAO." },
+            { year: 2023, text: "Cita de la versión 1.4 de 'Sustainability Framework Programme - Terms and definitions' de Preferred by Nature." },
+            { year: 2024, text: "Se publica el documento 'Standards of practice to guide ecosystem restoration – A contribution to the United Nations Decade on Ecosystem Restoration 2021-2030', publicado por la Organización de las Naciones Unidas para la Agricultura y la Alimentación (FAO), la Society for Ecological Restoration (SER) y la Unión Internacional para la Conservación de la Naturaleza (UICN) CEM. Este documento es una contribución a la Década de las Naciones Unidas sobre la Restauración de los Ecosistemas 2021–2030." }
+        ];
+
+        let events = [];
+        let correctOrder = [];
+        let isCorrect = false;
+
+        function initializeGame() {
+            events = [...eventsData]; // Copiar todos los eventos
+            events.sort(() => Math.random() - 0.5); // Barajar eventos
+            correctOrder = [...eventsData].sort((a, b) => a.year - b.year); // Ordenar para verificar
+            timelineContainer.innerHTML = ''; // Limpiar la línea de tiempo
+            messageContainer.classList.add('hidden'); // Ocultar mensajes anteriores
+            createTimelineSections();
+            displayEvents();
+            resetButton.classList.remove('hidden');
+        }
+
+        function createTimelineSections() {
+            timelineContainer.innerHTML = ''; // Limpiar el contenedor
+            const years = [...new Set(correctOrder.map(event => event.year))]; // Obtener años únicos ordenados
+
+            years.forEach(year => {
+                const section = document.createElement('div');
+                section.classList.add('timeline-section');
+                section.dataset.year = year;
+                section.innerHTML = `<h3>${year}</h3>`;
+                timelineContainer.appendChild(section);
+            });
+        }
+
+        function displayEvents() {
+            const fragment = document.createDocumentFragment();
+            events.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.classList.add('event-card', 'draggable');
+                eventCard.textContent = event.text;
+                eventCard.dataset.year = event.year;
+                eventCard.draggable = true;
+                fragment.appendChild(eventCard);
+            });
+            timelineContainer.appendChild(fragment);
+
+            const timelineSections = timelineContainer.querySelectorAll('.timeline-section');
+            timelineSections.forEach(section => {
+                const year = parseInt(section.dataset.year);
+                const eventsForYear = correctOrder.filter(event => event.year === year);
+                eventsForYear.forEach(() => {
+                    const placeholder = document.createElement('div');
+                    placeholder.classList.add('placeholder');
+                    section.appendChild(placeholder);
+                });
+            });
+
+            addDragAndDropListeners();
+        }
+
+        function addDragAndDropListeners() {
+            const draggableElements = document.querySelectorAll('.draggable');
+            const dropZones = document.querySelectorAll('.timeline-section');
+
+            let draggedItem = null;
+
+            draggableElements.forEach(item => {
+                item.addEventListener('dragstart', (event) => {
+                    draggedItem = event.target;
+                    event.target.classList.add('opacity-50');
+                    event.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', (event) => {
+                    event.target.classList.remove('opacity-50');
+                    draggedItem = null;
+                });
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', (event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    const placeholder = zone.querySelector('.placeholder');
+                    if (placeholder) {
+                         placeholder.classList.add('drop-hover');
+                    }
+                });
+
+                zone.addEventListener('dragleave', (event) => {
+                    event.preventDefault();
+                     const placeholder = zone.querySelector('.placeholder');
+                    if (placeholder) {
+                         placeholder.classList.remove('drop-hover');
+                    }
+                });
+
+                zone.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    const placeholder = zone.querySelector('.placeholder');
+                    if (placeholder) {
+                        placeholder.classList.remove('drop-hover');
+                        zone.appendChild(draggedItem);
+                        draggedItem = null;
+                        checkOrder();
+                    }
+                });
+            });
+        }
+
+        function checkOrder() {
+            const placedEvents = Array.from(timelineContainer.querySelectorAll('.event-card'));
+            const actualOrder = placedEvents.map(event => ({
+                year: parseInt(event.dataset.year),
+                text: event.textContent
+            }));
+
+            isCorrect = actualOrder.length === correctOrder.length && actualOrder.every((event, index) =>
+                event.year === correctOrder[index].year && event.text === correctOrder[index].text
+            );
+
+            messageContainer.classList.remove('hidden');
+            if (isCorrect) {
+                messageContainer.textContent = '¡Felicitaciones! Has organizado la cronología correctamente.';
+                messageContainer.classList.remove('feedback-incorrect');
+                messageContainer.classList.add('feedback-correct');
+            } else {
+                messageContainer.textContent = 'Inténtalo de nuevo. Reorganiza los eventos.';
+                messageContainer.classList.remove('feedback-correct');
+                messageContainer.classList.add('feedback-incorrect');
+            }
+            resetButton.classList.remove('hidden');
+        }
+
+        resetButton.addEventListener('click', () => {
+            initializeGame();
+        });
+
+        // Inicializar la aplicación
+        initializeGame();
+
+    </script>
+</body>
+</html>
