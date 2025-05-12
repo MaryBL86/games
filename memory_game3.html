@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memoria Restauración Ecológica</title>
+    <style>
+        :root {
+            --primary-color: #2D6A4F;
+            --secondary-color: #74C69D;
+            --accent-color: #D8F3DC;
+            --text-color: #081C15;
+            --light-text: #fff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f8f1;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        header {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 1rem;
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-info div {
+            text-align: center;
+            flex: 1;
+        }
+
+        .level-display {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .theme-display {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .timer, .score {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 1rem;
+            perspective: 1000px;
+        }
+
+        .memory-game {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .memory-card {
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .memory-card.flip {
+            transform: rotateY(180deg);
+        }
+
+        .memory-card.matched {
+            transform: rotateY(180deg);
+            box-shadow: 0 0 0 2px var(--secondary-color);
+        }
+
+        .front-face, .back-face {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            border-radius: 10px;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .front-face {
+            background-color: var(--secondary-color);
+            transform: rotateY(180deg);
+            color: var(--text-color);
+        }
+
+        .back-face {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+        }
+
+        .back-face::after {
+            content: "RE";
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #1b4332;
+        }
+
+        .instructions-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--accent-color);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions-container h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .instructions-container ol, .instructions-container ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .instructions-container li {
+            margin-bottom: 0.5rem;
+        }
+
+        .signature {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .modal p {
+            margin-bottom: 1.5rem;
+        }
+
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .memory-game {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .memory-card {
+                height: 120px;
+            }
+            .game-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Memoria: Restauración Ecológica</h1>
+        <p>Encuentra los pares relacionando conceptos y aplicaciones</p>
+    </header>
+
+    <div class="game-info">
+        <div>
+            <div class="level-display">Nivel: <span id="current-level">1</span></div>
+            <div class="theme-display">Tema: <span id="current-theme">Conceptos Básicos</span></div>
+        </div>
+        <div>
+            <div>Tiempo:</div>
+            <div class="timer" id="timer">00:00.0</div>
+        </div>
+        <div>
+            <div>Puntaje:</div>
+            <div class="score" id="score">0</div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="memory-game" id="memory-game"></div>
+    </div>
+
+    <div class="controls">
+        <button id="restart">Reiniciar Juego</button>
+        <button id="change-level">Cambiar Nivel</button>
+    </div>
+
+    <div class="instructions-container">
+        <h2>Instrucciones del Juego</h2>
+        <ol>
+            <li>El objetivo es encontrar todas las parejas de cartas que contienen conceptos relacionados.</li>
+            <li>Haz clic en dos cartas para voltearlas.</li>
+            <li>Si las cartas coinciden conceptualmente, se quedarán volteadas.</li>
+            <li>Si no coinciden, se volverán a ocultar.</li>
+            <li>Intenta encontrar todas las parejas en el menor tiempo posible.</li>
+            <li>Tu puntuación se calcula en base a los aciertos y el tiempo empleado.</li>
+        </ol>
+        <p>Este juego está diseñado para reforzar tus conocimientos sobre restauración ecológica, sus estrategias y métodos de monitoreo.</p>
+        <div class="signature">RE - Restauración Ecológica</div>
+    </div>
+
+    <div class="modal" id="level-modal">
+        <div class="modal-content">
+            <h2>Selecciona un Nivel</h2>
+            <div class="level-buttons">
+                <button class="level-btn" data-level="1" data-theme="restauracion">Nivel 1: Conceptos Básicos</button>
+                <button class="level-btn" data-level="2" data-theme="restauracion">Nivel 2: Restauración Avanzada</button>
+                <button class="level-btn" data-level="3" data-theme="estrategias">Nivel 3: Estrategias Básicas</button>
+                <button class="level-btn" data-level="4" data-theme="estrategias">Nivel 4: Estrategias Avanzadas</button>
+                <button class="level-btn" data-level="5" data-theme="monitoreo">Nivel 5: Monitoreo Básico</button>
+                <button class="level-btn" data-level="6" data-theme="monitoreo">Nivel 6: Monitoreo Avanzado</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="win-modal">
+        <div class="modal-content">
+            <h2>¡Felicidades!</h2>
+            <p>Has completado el nivel <span id="completed-level">1</span>.</p>
+            <p>Tiempo: <span id="final-time">00:00.0</span></p>
+            <p>Puntaje: <span id="final-score">0</span></p>
+            <button id="next-level">Siguiente Nivel</button>
+            <button id="select-level">Seleccionar Otro Nivel</button>
+        </div>
+    </div>
+
+    <script>
+        // Datos para el juego
+        const gameData = {
+            restauracion: {
+                nivel1: [
+                    { id: 1, concept: "Restauración Ecológica", match: "Proceso para recuperar un ecosistema degradado" },
+                    { id: 2, concept: "Degradación", match: "Deterioro de la estructura y función de un ecosistema" },
+                    { id: 3, concept: "Resiliencia", match: "Capacidad de un ecosistema para recuperarse tras perturbaciones" },
+                    { id: 4, concept: "Sucesión Ecológica", match: "Proceso ordenado de cambios en la composición de especies" }
+                ],
+                nivel2: [
+                    { id: 1, concept: "Ecosistema de Referencia", match: "Modelo para planificar la restauración" },
+                    { id: 2, concept: "Rehabilitación", match: "Reparación parcial de funciones ecosistémicas" },
+                    { id: 3, concept: "Reclamación", match: "Recuperación de la productividad en tierras degradadas" },
+                    { id: 4, concept: "Servicios Ecosistémicos", match: "Beneficios que los humanos obtienen de los ecosistemas" },
+                    { id: 5, concept: "Restauración Pasiva", match: "Regeneración natural sin intervención humana directa" },
+                    { id: 6, concept: "Perturbación", match: "Evento que altera la estructura del ecosistema" }
+                ]
+            },
+            estrategias: {
+                nivel1: [
+                    { id: 1, concept: "Reforestación", match: "Plantación de árboles en áreas deforestadas" },
+                    { id: 2, concept: "Control de Erosión", match: "Uso de barreras físicas para retener suelo" },
+                    { id: 3, concept: "Eliminación de Especies Invasoras", match: "Retiro de organismos no nativos perjudiciales" },
+                    { id: 4, concept: "Revegetación", match: "Introducción de plantas nativas en áreas degradadas" }
+                ],
+                nivel2: [
+                    { id: 1, concept: "Nucleación", match: "Creación de pequeños núcleos de diversidad biológica" },
+                    { id: 2, concept: "Biorremediación", match: "Uso de organismos para degradar contaminantes" },
+                    { id: 3, concept: "Conectividad de Hábitat", match: "Creación de corredores ecológicos entre fragmentos" },
+                    { id: 4, concept: "Restauración Hidrológica", match: "Recuperación de cauces naturales y ciclos del agua" },
+                    { id: 5, concept: "Propagación de Especies Nativas", match: "Cultivo y reproducción de flora local" },
+                    { id: 6, concept: "Translocación", match: "Reintroducción de especies animales en áreas restauradas" }
+                ]
+            },
+            monitoreo: {
+                nivel1: [
+                    { id: 1, concept: "Indicadores Biológicos", match: "Especies cuya presencia indica calidad ambiental" },
+                    { id: 2, concept: "Parcelas Permanentes", match: "Áreas delimitadas para seguimiento a largo plazo" },
+                    { id: 3, concept: "Índice de Diversidad", match: "Medida matemática de la riqueza de especies" },
+                    { id: 4, concept: "Fotointerpretación", match: "Análisis de imágenes aéreas o satelitales" }
+                ],
+                nivel2: [
+                    { id: 1, concept: "Biomasa", match: "Cantidad total de materia orgánica presente" },
+                    { id: 2, concept: "Análisis de Suelos", match: "Evaluación de propiedades físicas y químicas del sustrato" },
+                    { id: 3, concept: "Monitoreo Fenológico", match: "Seguimiento de ciclos de floración y fructificación" },
+                    { id: 4, concept: "Redes Tróficas", match: "Estudio de relaciones alimentarias entre especies" },
+                    { id: 5, concept: "Calidad del Agua", match: "Medición de parámetros físico-químicos hídricos" },
+                    { id: 6, concept: "Teledetección", match: "Uso de sensores remotos para evaluar vegetación" }
+                ]
+            }
+        };
+
+        // Variables del juego
+        let currentLevel = 1;
+        let currentTheme = "restauracion";
+        let score = 0;
+        let startTime;
+        let timerInterval;
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+        let matches = 0;
+        let totalPairs = 0;
+        let levelData;
+
+        // Elementos DOM
+        const memoryGame = document.getElementById('memory-game');
+        const timerElement = document.getElementById('timer');
+        const scoreElement = document.getElementById('score');
+        const currentLevelElement = document.getElementById('current-level');
+        const themeDisplayElement = document.getElementById('current-theme');
+        const restartButton = document.getElementById('restart');
+        const changeLevelButton = document.getElementById('change-level');
+        const levelModal = document.getElementById('level-modal');
+        const winModal = document.getElementById('win-modal');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const nextLevelButton = document.getElementById('next-level');
+        const selectLevelButton = document.getElementById('select-level');
+        const completedLevelElement = document.getElementById('completed-level');
+        const finalTimeElement = document.getElementById('final-time');
+        const finalScoreElement = document.getElementById('final-score');
+
+        // Inicialización
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLevel(currentLevel, currentTheme);
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            restartButton.addEventListener('click', () => restartGame());
+            changeLevelButton.addEventListener('click', () => {
+                stopTimer();
+                levelModal.style.display = 'flex';
+            });
+            
+            levelButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    currentLevel = parseInt(button.dataset.level);
+                    currentTheme = button.dataset.theme;
+                    levelModal.style.display = 'none';
+                    loadLevel(currentLevel, currentTheme);
+                });
+            });
+
+            nextLevelButton.addEventListener('click', () => {
+                winModal.style.display = 'none';
+                goToNextLevel();
+            });
+
+            selectLevelButton.addEventListener('click', () => {
+                winModal.style.display = 'none';
+                levelModal.style.display = 'flex';
+            });
+        }
+
+        function loadLevel(level, theme) {
+            stopTimer();
+            resetBoard();
+            score = 0;
+            matches = 0;
+            updateScore();
+            
+            let themeData;
+            let levelKey;
+            
+            switch(theme) {
+                case "restauracion":
+                    themeData = gameData.restauracion;
+                    themeDisplayElement.textContent = level <= 2 ? "Restauración Ecológica" : "";
+                    break;
+                case "estrategias":
+                    themeData = gameData.estrategias;
+                    themeDisplayElement.textContent = "Estrategias de Restauración";
+                    break;
+                case "monitoreo":
+                    themeData = gameData.monitoreo;
+                    themeDisplayElement.textContent = "Monitoreo de Restauración";
+                    break;
+            }
+            
+            levelKey = level % 2 === 0 ? "nivel2" : "nivel1";
+            levelData = themeData[levelKey];
+            totalPairs = levelData.length;
+            
+            currentLevelElement.textContent = level;
+            
+            createGameCards(levelData);
+            startTimer();
+        }
+
+        function createGameCards(data) {
+            memoryGame.innerHTML = '';
+            
+            // Duplicar y mezclar las cartas (conceptos y coincidencias)
+            let cards = [];
+            data.forEach(item => {
+                cards.push({
+                    id: item.id,
+                    content: item.concept,
+                    type: 'concept'
+                });
+                cards.push({
+                    id: item.id,
+                    content: item.match,
+                    type: 'match'
+                });
+            });
+            
+            // Mezclar las cartas
+            cards = shuffleArray(cards);
+            
+            // Crear elementos DOM para cada carta
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('memory-card');
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.type = card.type;
+                
+                const frontFace = document.createElement('div');
+                frontFace.classList.add('front-face');
+                frontFace.textContent = card.content;
+                
+                const backFace = document.createElement('div');
+                backFace.classList.add('back-face');
+                
+                cardElement.appendChild(frontFace);
+                cardElement.appendChild(backFace);
+                
+                cardElement.addEventListener('click', flipCard);
+                memoryGame.appendChild(cardElement);
+            });
+            
+            // Ajustar el tamaño de las cartas basado en la cantidad
+            if (data.length > 4) {
+                memoryGame.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            } else {
+                memoryGame.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            }
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+            
+            this.classList.add('flip');
+            
+            if (!hasFlippedCard) {
+                // Primera carta
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+            
+            // Segunda carta
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            // Verificar si las cartas coinciden (mismo ID)
+            let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+            
+            if (isMatch) {
+                disableCards();
+                matches++;
+                updateScore(true);
+                
+                // Verificar si se han encontrado todos los pares
+                if (matches === totalPairs) {
+                    setTimeout(() => {
+                        stopTimer();
+                        showWinModal();
+                    }, 500);
+                }
+            } else {
+                unflipCards();
+                updateScore(false);
+            }
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            
+            resetBoard();
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            
+            setTimeout(() => {
+                firstCard.classList.remove('flip');
+                secondCard.classList.remove('flip');
+                
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        function startTimer() {
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 100);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateTimer() {
+            const currentTime = new Date();
+            const elapsedTime = new Date(currentTime - startTime);
+            const minutes = elapsedTime.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = elapsedTime.getUTCSeconds().toString().padStart(2, '0');
+            const tenths = Math.floor(elapsedTime.getUTCMilliseconds() / 100);
+            
+            timerElement.textContent = `${minutes}:${seconds}.${tenths}`;
+        }
+
+        function updateScore(isMatch = null) {
+            // Si es un acierto, aumenta el puntaje
+            if (isMatch === true) {
+                score += 100;
+            } 
+            // Si es un error, reduce el puntaje pero no menos de 0
+            else if (isMatch === false) {
+                score = Math.max(0, score - 20);
+            }
+            
+            scoreElement.textContent = score;
+        }
+
+        function calculateFinalScore() {
+            const currentTime = new Date();
+            const elapsedTime = (currentTime - startTime) / 1000; // en segundos
+            // Bonificación por tiempo: menos tiempo = más puntos
+            const timeBonus = Math.max(0, 1000 - Math.floor(elapsedTime * 5));
+            
+            return score + timeBonus;
+        }
+
+        function showWinModal() {
+            const finalScore = calculateFinalScore();
+            
+            completedLevelElement.textContent = currentLevel;
+            finalTimeElement.textContent = timerElement.textContent;
+            finalScoreElement.textContent = finalScore;
+            
+            winModal.style.display = 'flex';
+        }
+
+        function goToNextLevel() {
+            currentLevel++;
+            
+            // Cambiar de tema si corresponde
+            if (currentLevel > 2 && currentLevel <= 4) {
+                currentTheme = "estrategias";
+            } else if (currentLevel > 4) {
+                currentTheme = "monitoreo";
+            }
+            
+            // Si se completan todos los niveles, volver al primero
+            if (currentLevel > 6) {
+                currentLevel = 1;
+                currentTheme = "restauracion";
+            }
+            
+            loadLevel(currentLevel, currentTheme);
+        }
+
+        function restartGame() {
+            loadLevel(currentLevel, currentTheme);
+        }
+
+        // Función auxiliar para mezclar un array
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+    </script>
+</body>
+</html>
